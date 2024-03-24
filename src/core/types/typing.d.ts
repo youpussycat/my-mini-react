@@ -11,7 +11,7 @@ export declare interface MyReactNodeType {
   /** 虚拟 dom 的类型 */
   type: string | MyReactComponentType;
   /** 虚拟 dom 的 props */
-  props: any;
+  props: any & { children: MyReactNodeType | MyReactNodeType[] };
   /** 虚拟 dom 的唯一标识 */
   key: null | string;
   /** 虚拟 dom 的引用 */
@@ -49,4 +49,12 @@ export declare interface ReactCreateRootOptionsType {
   onRecoverableError?: AnyFunction;
   /** 已不用，唯一标识 */
   identifierPrefix?: string;
+}
+
+/** fiber 任务调度框架中的 fiber 节点数据 */
+export declare interface FiberUnitDataType {
+  /** 当前要处理的虚拟节点数据 */
+  vdom: MyReactNodeType;
+  /** 父节点的真实 dom */
+  parent: Element | null;
 }
