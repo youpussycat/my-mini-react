@@ -3,6 +3,7 @@ import type {
   ReactCreateRootOptionsType,
   MyReactNodeType,
   FiberUnitDataType,
+  ReactElement,
 } from "../../types/typing";
 
 /**
@@ -36,18 +37,26 @@ export const createRoot = (
   options?: ReactCreateRootOptionsType,
 ): ReactRootType => {
   return {
-    render: (element: MyReactNodeType) => {
+    render: (element: ReactElement) => {
+      // // 将不是虚拟节点的转换为虚拟节点
+      // element = createVDOM(element);
       // 移除 react 根容器中原本的节点
       [...container.childNodes].forEach((item) => item.remove());
+      if (!element) return;
       // 塑造 fiber 框架
       /** 任务调度队列 */
       let levelFiberQueue: FiberUnitDataType[] = [],
         /** 虚拟根节点节点对应的真实节点, fiber 节点中若是 parent 为 null 则是根结点 */
         rootDOM: Text | Element | null = null;
+      // 放置根节点
+      levelFiberQueue.push({
+        vdom: element as MyReactNodeType,
+        parent: null,
+      });
       /** 一个 fiber 任务 */
       const performUnitOfFiber = () => {
         // 根据队列获取当前任务数据
-        /** 当前任务数据 */
+        /** 当前任务数据， 数据一定是虚拟节点 */
         const unitData: FiberUnitDataType = levelFiberQueue[0];
         /** 该 fiber 节点对应的真实 DOM 节点 */
         const dom = createDOM(unitData.vdom); // 创建真实 dom 节点
@@ -62,17 +71,23 @@ export const createRoot = (
           // 若是有子节点，则一定是虚拟 dom 对象
           if (Array.isArray(children)) {
             children.forEach((vdom) =>
-              levelFiberQueue.push({ vdom, parent: dom as Element }),
+              levelFiberQueue.push({
+                vdom,
+                parent: dom as Element,
+              }),
             );
           } else {
-            levelFiberQueue.push({ vdom: children, parent: dom as Element });
+            levelFiberQueue.push({
+              vdom: children,
+              parent: dom as Element,
+            });
           }
         }
         // 删除 队列中的 当前 fiber 节点
         levelFiberQueue.shift();
         return null;
       };
-      /** 任务循环执行机制 */
+      /** 任务调度机制： 空闲时间执行对应任务，空闲时间快结束时停止任务执行，剩余任务放置下一次执行 */
       const FiberLoop = (deadline: IdleDeadline) => {
         while (levelFiberQueue.length) {
           // 挂载节点
@@ -91,24 +106,8 @@ export const createRoot = (
           if (rootDOM) container.appendChild(rootDOM);
         }
       };
-
-      /**
-       * @param {Element} container 根容器，一个 DOM 节点
-       * @param {MyReactNodeType} element 要渲染的 react 元素
-       * @description 渲染对应的 react 虚拟 dom 为真实 dom 但是无法处理函数式组件
-       */
-      const render = (container: Element, element: MyReactNodeType) => {
-        levelFiberQueue.push({
-          vdom: element,
-          parent: null,
-        });
-        requestIdleCallback(FiberLoop);
-        // // 渲染一个 react 组件时，会递归生成最底层的虚拟 dom 最后在进行组装渲染
-        // if (typeof element.type === "function") {
-        //   render(container, element.type(element.props));
-        // }
-      };
-      render(container, element);
+      // 执行任务调度机制，
+      requestIdleCallback(FiberLoop);
     },
     unmount: () => {},
   };

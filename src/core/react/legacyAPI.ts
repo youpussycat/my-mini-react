@@ -1,8 +1,20 @@
 import type {
   MyReactNodeType,
   MyReactNodeChildType,
+  ReactElement,
 } from "../types/typing.d.ts";
 import { createTextNode } from "./util.ts";
+/**
+ * @description 将 可转换为 vdom 的节点转换为 vdom 数据， 若是传入 vdom 则原样返回
+ * @param {ReactElement} 要转换的节点
+ * @returns {MyReactNodeType} vdom
+ */
+const createVDOM = (dom: ReactElement) => {
+  if (!dom || typeof dom === "boolean") return null;
+  if (typeof dom !== "object") {
+    return createTextNode(dom);
+  } else return dom;
+};
 /**
  * @description 根据类型,props.children，创建对应的虚拟 dom
  * @param {MyReactNodeType["type"]} type 虚拟 dom 的类型
@@ -12,9 +24,11 @@ import { createTextNode } from "./util.ts";
  */
 export const createElement = (
   type: MyReactNodeType["type"],
-  props: MyReactNodeType["props"],
-  ...children: MyReactNodeChildType[]
+  props?: MyReactNodeType["props"],
+  ...children: (MyReactNodeChildType | MyReactNodeChildType[])[]
 ) => {
+  debugger;
+  console.log("111");
   /** 最终的虚拟 dom 对象 */
   const result: MyReactNodeType = {
     type,
@@ -34,12 +48,15 @@ export const createElement = (
   };
   if (children.length) {
     // 有子节点 挨个将子节点中的字符串转为文本虚拟节点 之后挂载到 props 的 children 中
-    const trasform = (item) =>
-      typeof item === "string" ? createTextNode(item) : item;
+
     result.props.children =
       children.length > 1
-        ? children.map((item) => trasform(item))
-        : trasform(children[0]);
+        ? children.map((child) => {
+            if (Array.isArray(child))
+              return [...child.map((it) => createVDOM(it))];
+            else return createVDOM(child);
+          })
+        : children[0];
   }
   return result;
 };

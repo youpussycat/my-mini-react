@@ -11,7 +11,7 @@ export declare interface MyReactNodeType {
   /** 虚拟 dom 的类型 */
   type: string | MyReactComponentType;
   /** 虚拟 dom 的 props */
-  props: any & { children: MyReactNodeType | MyReactNodeType[] };
+  props: any & { children: MyReactNodeChildType | MyReactNodeChildType[] };
   /** 虚拟 dom 的唯一标识 */
   key: null | string;
   /** 虚拟 dom 的引用 */
@@ -34,7 +34,8 @@ declare interface ReactRootRenderType {
    */
   (element: MyReactNodeType): void;
 }
-
+/** react 元素类型 */
+export declare type ReactElement = MyReactNodeType | MyReactNodeChildType;
 /** createRoot 返回值类型 */
 export declare interface ReactRootType {
   /** 用于在根容器中渲染 react 元素 */
