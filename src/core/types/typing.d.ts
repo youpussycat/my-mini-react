@@ -11,7 +11,10 @@ export declare interface MyReactNodeType {
   /** 虚拟 dom 的类型 */
   type: string | MyReactComponentType;
   /** 虚拟 dom 的 props */
-  props: any & { children: MyReactNodeChildType | MyReactNodeChildType[] };
+  props: {
+    children?: MyReactNodeChildType | MyReactNodeChildType[];
+    [key: string]: any;
+  };
   /** 虚拟 dom 的唯一标识 */
   key: null | string;
   /** 虚拟 dom 的引用 */
@@ -19,13 +22,17 @@ export declare interface MyReactNodeType {
 }
 /** 万能函数类型 */
 export declare type AnyFunction = (...args: any[]) => any;
-/** react 虚拟 dom 中的子节点类型 */
-export declare type MyReactNodeChildType =
+/** react 虚拟 dom 中的子节点类型,无数组 */
+export declare type MyReactNodeChildTypeWithArr =
   | number
   | string
   | null
   | boolean
   | MyReactNodeType;
+/** react 虚拟 dom 中的子节点类型 */
+export declare type MyReactNodeChildType =
+  | MyReactNodeChildTypeWithArr
+  | MyReactNodeType[];
 
 /** createRoot 返回值中 render 的类型 */
 declare interface ReactRootRenderType {

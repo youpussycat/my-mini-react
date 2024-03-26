@@ -1,4 +1,5 @@
 import React from "./core/react/index.ts";
+import App from "./App";
 import { createRoot } from "./core/react-dom/client/createRoot.ts";
 // import App from "./App";
 // console.log("sas1", App, React.createElement(App, { a: 1 }, "sax"));
@@ -29,6 +30,7 @@ console.log(
 createRoot(document.getElementById("container")!).render(
   <div>
     1
+    <App test="1" />
     <div>
       2
       <div>

@@ -4,6 +4,7 @@ import type {
   MyReactNodeType,
   FiberUnitDataType,
   ReactElement,
+  MyReactComponentType,
 } from "../../types/typing";
 
 /**
@@ -58,27 +59,43 @@ export const createRoot = (
         // 根据队列获取当前任务数据
         /** 当前任务数据， 数据一定是虚拟节点 */
         const unitData: FiberUnitDataType = levelFiberQueue[0];
-        /** 该 fiber 节点对应的真实 DOM 节点 */
-        const dom = createDOM(unitData.vdom); // 创建真实 dom 节点
-        mountDOMProps(dom, unitData.vdom); // 挂载属性
-        // 挂载真实 dom 到其父节点上
-        if (unitData.parent) unitData.parent.appendChild(dom);
-        else rootDOM = dom;
+        /** 要挂载在下一层 fiber 节点的 parent 属性上的真实 dom 节点 */
+        let dom: Text | Element | null = null,
+          /** 当前 fiber 节点的子节点 */
+          children: MyReactNodeType["props"]["children"] | null = null;
+        /** 是否是函数式组件 */
+        const isFunctionCom = typeof unitData.vdom.type === "function";
+        if (isFunctionCom) {
+          // 若是函数组件，应该将 props 传入 type 获取下一层虚拟元素，
+          //同时将当前的真实的父 dom 作为子的父， 保证子可以挂载在正确的节点下
+          children = (unitData.vdom.type as MyReactComponentType)(
+            unitData.vdom.props,
+          );
+          dom = unitData.parent;
+        } else {
+          // 若是非函数组件，会创建对应的真实 DOM 元素，然后进行挂载
+          /** 该 fiber 节点对应的真实 DOM 节点 */
+          dom = createDOM(unitData.vdom); // 创建真实 dom 节点
+          mountDOMProps(dom, unitData.vdom); // 挂载属性
+          // 挂载真实 dom 到其父节点上
+          if (unitData.parent) unitData.parent.appendChild(dom);
+          else rootDOM = dom;
+          children = unitData.vdom.props.children;
+        }
         // 根据当前数据将子的 fiber 数据 push 到队列中
-        const children = unitData.vdom.props.children;
         // children 为 对象则 看是否为数组
         if (typeof children === "object") {
           // 若是有子节点，则一定是虚拟 dom 对象
           if (Array.isArray(children)) {
             children.forEach((vdom) =>
               levelFiberQueue.push({
-                vdom,
+                vdom: vdom as MyReactNodeType,
                 parent: dom as Element,
               }),
             );
           } else {
             levelFiberQueue.push({
-              vdom: children,
+              vdom: children!,
               parent: dom as Element,
             });
           }
