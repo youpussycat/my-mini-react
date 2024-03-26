@@ -3,10 +3,10 @@
   "version": "0.0.0",
   "main": "/src/index.js",
   "scripts": {
-    "dev": "vite",
+    "start": "vite",
     "build": "vite build",
-    "start": "react-scripts start",
-    "test": "react-scripts test --env=jsdom",
+    "old-start": "react-scripts start",
+    "old-test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
   "browserslist": {

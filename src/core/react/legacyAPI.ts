@@ -48,15 +48,16 @@ export const createElement = (
   };
   if (children.length) {
     // 有子节点 挨个将子节点中的字符串转为文本虚拟节点 之后挂载到 props 的 children 中
-
+    const getChildrenVDOM = (
+      child: MyReactNodeChildType | MyReactNodeChildType[],
+    ) => {
+      if (Array.isArray(child)) return [...child.map((it) => createVDOM(it))];
+      else return createVDOM(child);
+    };
     result.props.children =
       children.length > 1
-        ? children.map((child) => {
-            if (Array.isArray(child))
-              return [...child.map((it) => createVDOM(it))];
-            else return createVDOM(child);
-          })
-        : children[0];
+        ? children.map((child) => getChildrenVDOM(child))
+        : getChildrenVDOM(children[0]);
   }
   return result;
 };
