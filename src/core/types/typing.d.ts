@@ -65,4 +65,18 @@ export declare interface FiberUnitDataType {
   vdom: MyReactNodeType;
   /** 父节点的真实 dom */
   parent: Element | null;
+  /** 上一次渲染的虚拟 Fiber */
+  oldFiber?: FiberUnitDataType;
+}
+/** 根容器对应的全局数据类型 */
+export declare interface DOMDataType {
+  /** 任务调度队列，元素为每次任务调度需要的数据 */
+  levelFiberQueue: FiberUnitDataType[];
+  /** DOM 相关数据 */
+  DOMData: {
+    /** 虚拟根节点节点对应的真实节点, fiber 节点中若是 parent 为 null 则是根结点  */
+    rootDOM: null | Text | Element;
+    /** 根容器 DOM */
+    containerDOM: null | Element;
+  };
 }
