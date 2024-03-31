@@ -29,6 +29,21 @@ const mountDOMProps = (dom: Element | Text, element: MyReactNodeType) => {
     if (key !== "children") dom[key] = element.props[key];
   });
 };
+/**
+ * @description 根据容器对应数据初始化 mapData
+ *
+ */
+const initMapData = (container, DOMData) => {
+  if (containerWithGlobalData.has(container)) {
+    const mapData = containerWithGlobalData.get(container)!;
+    DOMData.levelFiberQueue = mapData.levelFiberQueue;
+    /** 虚拟根节点节点对应的真实节点, fiber 节点中若是 parent 为 null 则是根结点 */
+    DOMData.rootDOM = mapData.rootDOM;
+    DOMData.containerDOM = mapData.containerDOM;
+  } else {
+    containerWithGlobalData.set(container, { ...DOMData });
+  }
+};
 /** 容器和对应数据的存储映射 */
 const containerWithGlobalData = new WeakMap<Element, DOMDataType>();
 /**
@@ -41,30 +56,21 @@ const createWorkerFiber = (
   firstFiber: FiberUnitDataType,
   container: Element,
 ): IdleRequestCallback => {
-  /** 任务调度队列 */
-  let levelFiberQueue: DOMDataType["levelFiberQueue"] = [],
-    /** DOM 数据 */
-    DOMData: DOMDataType["DOMData"] = {
-      rootDOM: null,
-      containerDOM: null,
-    };
-  if (containerWithGlobalData.has(container)) {
-    const mapData = containerWithGlobalData.get(container)!;
-    levelFiberQueue = mapData.levelFiberQueue;
-    /** 虚拟根节点节点对应的真实节点, fiber 节点中若是 parent 为 null 则是根结点 */
-    DOMData.rootDOM = mapData.DOMData.rootDOM;
-    DOMData.containerDOM = mapData.DOMData.containerDOM;
-  } else {
-    containerWithGlobalData.set(container, { DOMData, levelFiberQueue });
-  }
+  /** 任务调度队列所需要的各种数据 */
+  const DOMData: DOMDataType = {
+    levelFiberQueue: [],
+    rootDOM: null,
+    containerDOM: null,
+  };
+  initMapData(container, DOMData);
   // 放置根节点
-  levelFiberQueue.push(firstFiber);
+  DOMData.levelFiberQueue.push(firstFiber);
   DOMData.containerDOM = container;
   /** 一个 fiber 任务 */
   const performUnitOfFiber = () => {
     // 根据队列获取当前任务数据
     /** 当前任务数据， 数据一定是虚拟节点 */
-    const unitData: FiberUnitDataType = levelFiberQueue[0];
+    const unitData: FiberUnitDataType = DOMData.levelFiberQueue[0];
     /** 要挂载在下一层 fiber 节点的 parent 属性上的真实 dom 节点 */
     let dom: Text | Element | null = null,
       /** 当前 fiber 节点的子节点 */
@@ -94,25 +100,25 @@ const createWorkerFiber = (
       // 若是有子节点，则一定是虚拟 dom 对象
       if (Array.isArray(children)) {
         children.forEach((vdom) =>
-          levelFiberQueue.push({
+          DOMData.levelFiberQueue.push({
             vdom: vdom as MyReactNodeType,
             parent: dom as Element,
           }),
         );
       } else {
-        levelFiberQueue.push({
+        DOMData.levelFiberQueue.push({
           vdom: children!,
           parent: dom as Element,
         });
       }
     }
     // 删除 队列中的 当前 fiber 节点
-    levelFiberQueue.shift();
+    DOMData.levelFiberQueue.shift();
     return null;
   };
   /** 任务调度机制： 空闲时间执行对应任务，空闲时间快结束时停止任务执行，剩余任务放置下一次执行 */
   const FiberLoop = (deadline: IdleDeadline) => {
-    while (levelFiberQueue.length) {
+    while (DOMData.levelFiberQueue.length) {
       // 挂载节点
       if (deadline.timeRemaining() < 1) {
         // 需要中断
@@ -122,7 +128,7 @@ const createWorkerFiber = (
       performUnitOfFiber();
     }
     // 中断后等待空闲继续执行剩余任务
-    if (levelFiberQueue.length) {
+    if (DOMData.levelFiberQueue.length) {
       requestIdleCallback(FiberLoop);
     } else {
       // 说明任务完成，应该挂载真实节点到文档中。

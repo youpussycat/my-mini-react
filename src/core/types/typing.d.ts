@@ -72,11 +72,8 @@ export declare interface FiberUnitDataType {
 export declare interface DOMDataType {
   /** 任务调度队列，元素为每次任务调度需要的数据 */
   levelFiberQueue: FiberUnitDataType[];
-  /** DOM 相关数据 */
-  DOMData: {
-    /** 虚拟根节点节点对应的真实节点, fiber 节点中若是 parent 为 null 则是根结点  */
-    rootDOM: null | Text | Element;
-    /** 根容器 DOM */
-    containerDOM: null | Element;
-  };
+  /** 虚拟根节点节点对应的真实节点, fiber 节点中若是 parent 为 null 则是根结点  */
+  rootDOM: null | Text | Element;
+  /** 根容器 DOM */
+  containerDOM: null | Element;
 }
