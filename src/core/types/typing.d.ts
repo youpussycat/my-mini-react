@@ -63,6 +63,8 @@ export declare interface ReactCreateRootOptionsType {
 export declare interface FiberUnitDataType {
   /** 当前要处理的虚拟节点数据 */
   vdom: MyReactNodeType;
+  /** fiber 对应的真实节点 */
+  dom?: Element | Text;
   /** 父节点的真实 dom */
   parent: Element | null;
   /** 上一次渲染的虚拟 Fiber */
@@ -76,4 +78,8 @@ export declare interface DOMDataType {
   rootDOM: null | Text | Element;
   /** 根容器 DOM */
   containerDOM: null | Element;
+  /** 上一次渲染的 fiber 节点队列 */
+  oldFiberQueue: FiberUnitDataType[];
+  /** 当前任务调度机制中已经构建的 fiber */
+  creatingOldFiberArr: FiberUnitDataType[];
 }
